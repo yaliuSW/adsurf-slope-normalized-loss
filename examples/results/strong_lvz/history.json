@@ -1,0 +1,19 @@
+{
+  "case": "strong_lvz",
+  "start": 128,
+  "start_indexing": "zero-based",
+  "start_choice": "retained winner",
+  "switch_update": 160,
+  "raw_ensemble_best_RMSE_m_s": 3.718838510492657,
+  "retained_selected_update": 360,
+  "missing_root_rule": "Omit missing points within each group; require at least one point in every group. Diagnostic only; final selection still requires complete predictions.",
+  "comparison": "Current checkpoint errors, not cumulative minima; both paths use the same start.",
+  "input_sha256": {
+    "observations_and_starts": "0681f575b192ddc1c7fe9b3773d16123a7cfa807f1da59944d495ba8bfbf07bf",
+    "config": "a55dccd9a523c5f54febee79b856a29ecc900a14cf9b3896a8e0a4173a7793ba",
+    "selection_summary": "d989cacf2cc190f67d1dafc4da5d0c504b1732b1a5202bcd332efa887dc2b18c",
+    "switch_diagnostics": "2dbf746b2158afd27847a02f73c9c2c91e1f90f0436a70fbab5c20fde45fe166",
+    "raw_trajectory": "78c5876874514844ca28f5bf9b7755f5fc0d91afdcfec0e773c4e5a6c4169367",
+    "sn_trajectory": "e819d24d1735bb66c602f3a79ba10fe4745a7790040339552b387fed8cdbadbf"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "case": "crustal",
+  "start": 11,
+  "start_indexing": "zero-based",
+  "start_choice": "retained winner",
+  "switch_update": 180,
+  "raw_ensemble_best_RMSE_m_s": 0.6645319605676008,
+  "retained_selected_update": 400,
+  "missing_root_rule": "Omit missing points within each group; require at least one point in every group. Diagnostic only; final selection still requires complete predictions.",
+  "comparison": "Current checkpoint errors, not cumulative minima; both paths use the same start.",
+  "input_sha256": {
+    "observations_and_starts": "5f507f1cd46283dd1be3a2a851fb2e116a5db6784976a79191d92aab5781586d",
+    "config": "66deaf7150f48e42d6e12467e0f704d9028d140a52f3a29b1a633b0e8522c3bf",
+    "selection_summary": "75c64976e26b68ca3db290406a23955224bcc299c289d127f20dd63c9339734e",
+    "switch_diagnostics": "d4bd9d56fa791956b644dcb1592981913ef236349fbf27c6bf7eab22fe0c7ca8",
+    "raw_trajectory": "e7a368da2fe2f0c29f82a3b27244a0a550ca2cc299b9f97eeaa5deb92977761f",
+    "sn_trajectory": "4b0f3009f734148210747b507c3baf1b695bc167e520c53c2d1ea0133a1aac03"
+  }
+}

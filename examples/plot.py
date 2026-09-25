@@ -17,7 +17,7 @@ def profile(ax,vs,h,end,**kwargs):
     ax.plot(np.repeat(vs,2),np.column_stack([top,bottom]).ravel(),**kwargs)
 
 
-def plot_case(case,output,run=None):
+def plot_case(case,output,run=None,history=None):
     arrays=np.load(HERE/'data'/(case+'.npz'))
     data=Path(run)/'selection' if run else HERE/'results'/case
     models={m:np.load(data/(m+'_selected.npz')) for m in ['raw','retained']}
@@ -52,14 +52,38 @@ def plot_case(case,output,run=None):
                          lw=1.8 if method=='retained' else 1.1,label=label if g==0 else None)
     axes[1].set(xlabel='Frequency (Hz)',ylabel=f'Phase velocity ({"m/s" if shallow else "km/s"})',title='b  Dispersion fit')
     axes[1].legend(frameon=False,fontsize=8)
-    for method,label,color in [('raw','ADsurf',COLORS['raw']),('sn','Switching path',COLORS['retained'])]:
-        path=Path(run)/method/'trajectory.npz' if run else HERE/'results'/case/(method+'_trajectory.npz')
-        if path.exists():
-            tr=np.load(path);loss=tr['training_loss']
-            axes[2].semilogy(np.arange(1,len(loss)+1),np.median(loss,axis=1),color=color,label=label)
-    axes[2].set(xlabel='Update',ylabel='Median path objective',title='c  Optimization history')
-    if axes[2].lines:axes[2].legend(frameon=False,fontsize=8)
-    else:axes[2].text(.5,.5,'Run the example to plot its history',ha='center',va='center',transform=axes[2].transAxes)
+    history=Path(history) if history else (Path(run)/'history' if run else data)
+    ax=axes[2]
+    if (history/'history.csv').exists():
+        info=json.loads((history/'history.json').read_text())
+        if info['case']!=case:raise ValueError('History belongs to a different example')
+        rows=np.genfromtxt(history/'history.csv',delimiter=',',names=True,dtype=None,encoding='utf-8')
+        if np.any(rows['start']!=info['start']):raise ValueError('History mixes initial models')
+        for method,label,color in [('sn','SN path',COLORS['retained']),('raw','ADsurf',COLORS['raw'])]:
+            r=rows[rows['method']==method]
+            ax.semilogy(r['update'],r['weighted_RMSE_m_s'],color=color,
+                ls='--' if method=='raw' else '-',lw=1.3 if method=='raw' else 1.8,label=label)
+            partial=(r['coverage']<r['total_points']) & np.isfinite(r['weighted_RMSE_m_s'])
+            ax.scatter(r['update'][partial],r['weighted_RMSE_m_s'][partial],s=24,
+                facecolors='white',edgecolors=color,zorder=4,
+                label='Incomplete roots' if partial.any() and method=='sn' else None)
+        summary=json.loads((data/'summary.json').read_text())
+        if isinstance(summary,list):summary={row['method']:row for row in summary}
+        winner=summary['retained']
+        if info['start']==winner['start']:
+            ax.scatter([winner['update']],[winner['weighted_RMSE_m_s']],marker='*',s=75,
+                facecolor=COLORS['retained'],edgecolor='black',linewidth=.6,zorder=5,
+                label='Selected model (a, b)')
+        if info['switch_update']>=0:
+            ax.axvline(info['switch_update'],color='.4',lw=1,ls=':',label='Loss switch')
+        ax.axhline(info['raw_ensemble_best_RMSE_m_s'],color='.6',lw=.9,ls='-.',label='Best ADsurf (all starts)')
+        ax.set_title(f"c  Same start: {info['start']} (0-based)")
+        ax.legend(frameon=True,facecolor='white',edgecolor='none',framealpha=1,
+                  fontsize=7,loc='best')
+    else:
+        ax.set_title('c  Physical convergence')
+        ax.text(.5,.5,'Evaluate saved paths with\nevaluate_history.py',ha='center',va='center',transform=ax.transAxes)
+    ax.set(xlabel='Update',ylabel='Weighted dispersion RMSE (m/s)')
     fig.suptitle(case.replace('_',' ').capitalize())
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
     for suffix in ['png','pdf']:fig.savefig(output/(case+'.'+suffix),dpi=200)
@@ -86,7 +110,8 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case',default='field');parser.add_argument('--out',default='plots')
     parser.add_argument('--run',help='New run directory containing selection/, raw/ and sn/')
+    parser.add_argument('--history',help='Directory containing evaluated history.csv and history.json')
     parser.add_argument('--noise',action='store_true')
     args=parser.parse_args()
     if args.noise:plot_noise(args.out)
-    else:plot_case(args.case,args.out,args.run)
+    else:plot_case(args.case,args.out,args.run,args.history)

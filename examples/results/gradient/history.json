@@ -1,0 +1,19 @@
+{
+  "case": "gradient",
+  "start": 0,
+  "start_indexing": "zero-based",
+  "start_choice": "retained winner",
+  "switch_update": -1,
+  "raw_ensemble_best_RMSE_m_s": 0.16031732201628163,
+  "retained_selected_update": 400,
+  "missing_root_rule": "Omit missing points within each group; require at least one point in every group. Diagnostic only; final selection still requires complete predictions.",
+  "comparison": "Current checkpoint errors, not cumulative minima; both paths use the same start.",
+  "input_sha256": {
+    "observations_and_starts": "54c9291896477a75ce67b48cab68328c215dddcf4f18d538753814e839234f8d",
+    "config": "72312780c5e96ba92034d757a9c801a736109afea3637d64b4ecc8cae63f62ad",
+    "selection_summary": "7f7abfc38b1a72379e6f9b8fd6babf587052eafa8cd574fd2b7baa0321bd5b3f",
+    "switch_diagnostics": "cda82e437d445c4f2fd1edaa04a0e3e410750a8aa9d88e65af60c774e8cdc594",
+    "raw_trajectory": "7d324559a8291ed7b4ce5ec5317184cfcc0075c6b33bc078d677f588429e22ec",
+    "sn_trajectory": "7d324559a8291ed7b4ce5ec5317184cfcc0075c6b33bc078d677f588429e22ec"
+  }
+}

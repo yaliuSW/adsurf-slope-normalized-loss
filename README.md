@@ -80,7 +80,7 @@ The gradient input contains two identical profiles and represents one unique sta
 
 ## Plot results
 
-Generate velocity profiles, dispersion fits and objective histories from the
+Generate velocity profiles, dispersion fits and physical convergence histories from the
 included numerical results:
 
 ```sh
@@ -93,11 +93,33 @@ python examples/plot_mechanism.py --out plots
 To plot a new run:
 
 ```sh
+python examples/evaluate_history.py --case gradient --run user_runs/gradient --out user_runs/gradient/history
 python examples/plot.py --case gradient --run user_runs/gradient --out plots
 ```
 
-Both PNG and vector PDF are written. Objective histories show the median of
-each path's own objective; they are not physical dispersion-RMSE histories.
+Both PNG and vector PDF are written. Panels a and b show the best eligible
+models across the initial ensemble. Panel c compares **weighted dispersion RMSE
+from the same initial model** on the raw and switching paths, using the start
+that produced the retained winner (zero-based index in the title). The vertical
+dotted line marks the loss switch; the gray horizontal line is the best ADsurf
+score across all starts. The star identifies the retained model shown in panels
+a and b. These are current checkpoint errors, not cumulative
+best scores. Training objectives with different definitions are not joined or
+compared in this panel.
+
+Physical histories are evaluated at the saved checkpoints. Hollow markers
+denote incomplete predictions: missing points are omitted within each group,
+while retaining group weights of 4:1. A score is undefined if any group has no
+prediction. Coverage and branch-screening status are recorded in `history.csv`;
+partial scores are diagnostics only and do not relax final model selection.
+The included histories for the four main cases can be plotted without QEDispInv.
+To regenerate a history (requires the forward solver), run:
+
+```sh
+python examples/evaluate_history.py --case strong_lvz --out user_runs/strong_lvz_history
+python examples/plot.py --case strong_lvz --history user_runs/strong_lvz_history --out plots
+```
+
 The mechanism plot uses the fixed 500-model candidate bank; 349 have complete
 known-mode predictions. Its SN objective is multiplied by a fixed positive
 factor for display, and the local slope approximation weakens farther from the
