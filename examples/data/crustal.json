@@ -1,0 +1,17 @@
+{
+  "case": "crustal",
+  "elastic": "Brocher",
+  "mapped": false,
+  "vary_h": false,
+  "lr_initial": 0.03,
+  "damping": 0.0,
+  "unique_starts": 50,
+  "starts": 50,
+  "iterations": 400,
+  "plateau_options": {
+    "window": 20,
+    "tolerance": 0.01,
+    "patience": 2,
+    "min_raw": 80
+  }
+}

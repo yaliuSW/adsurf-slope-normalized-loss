@@ -1,0 +1,20 @@
+{
+  "case": "field",
+  "elastic": "Brocher",
+  "mapped": true,
+  "vary_h": false,
+  "lr_initial": 0.001,
+  "damping": 0.1,
+  "unique_starts": 100,
+  "starts": 100,
+  "iterations": 400,
+  "plateau_options": {
+    "window": 20,
+    "tolerance": 0.01,
+    "patience": 2,
+    "min_raw": 80
+  },
+  "nondecreasing_thickness": false,
+  "seed": 2026091601,
+  "initialization": "100 smooth lognormal draws, log standard deviation 0.10 at seven depth knots; two log-neighbor smoothing passes; exact depth-overlap mapping to nine layers; seed 2026091601."
+}

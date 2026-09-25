@@ -1,0 +1,9 @@
+cmake
+make
+pybind11
+c-compiler
+cxx-compiler
+fortran-compiler
+gcc_linux-64
+gxx_linux-64
+gfortran_linux-64

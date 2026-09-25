@@ -1,0 +1,313 @@
+{
+  "window": 20,
+  "tolerance": 0.01,
+  "patience": 2,
+  "minimum_raw_updates": 80,
+  "switch_updates": [
+    -1,
+    -1
+  ],
+  "events": [],
+  "checks": [
+    {
+      "update": 20,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.9008058796266013,
+        0.9008058796266013
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 40,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.23624346300714763,
+        0.23624346300714763
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 60,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.5243507770708722,
+        0.5243507770708722
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 80,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.3676215746833659,
+        0.3676215746833659
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 100,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.2524681768269678,
+        0.2524681768269678
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 120,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.1598371722948778,
+        0.1598371722948778
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 140,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.18398880488199598,
+        0.18398880488199598
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 160,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.2417075267473874,
+        0.2417075267473874
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 180,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.2552105058570874,
+        0.2552105058570874
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 200,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.1544039785569492,
+        0.1544039785569492
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 220,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.17070995708874237,
+        0.17070995708874237
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 240,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.09809418190898268,
+        0.09809418190898268
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 260,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.34322971862409896,
+        0.34322971862409896
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 280,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.18221315660249926,
+        0.18221315660249926
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 300,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.018215246336023574,
+        0.018215246336023574
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 320,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.1277191481120833,
+        0.1277191481120833
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 340,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.04626687987394715,
+        0.04626687987394715
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 360,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.04217637784145232,
+        0.04217637784145232
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 380,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.03820893267932817,
+        0.03820893267932817
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": true
+    },
+    {
+      "update": 400,
+      "regime": [
+        0
+      ],
+      "improvement": [
+        0.035628055988527155,
+        0.035628055988527155
+      ],
+      "streak": [
+        0,
+        0
+      ],
+      "allow_switch": false
+    }
+  ]
+}

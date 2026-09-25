@@ -1,0 +1,17 @@
+{
+  "case": "gradient",
+  "elastic": "Brocher",
+  "mapped": true,
+  "vary_h": true,
+  "lr_initial": 0.005,
+  "damping": 0.002,
+  "unique_starts": 1,
+  "starts": 2,
+  "iterations": 400,
+  "plateau_options": {
+    "window": 20,
+    "tolerance": 0.01,
+    "patience": 2,
+    "min_raw": 80
+  }
+}

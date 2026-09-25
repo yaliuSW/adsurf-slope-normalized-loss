@@ -1,0 +1,20 @@
+[
+  {
+    "method": "raw",
+    "weighted_RMSE_m_s": 6.434447118853923,
+    "all_RMSE_m_s": 5.927738814661118,
+    "Vs_RMSE_m_s": 133.26288382218863,
+    "start": 37,
+    "update": 200,
+    "accepted_starts": 61
+  },
+  {
+    "method": "retained",
+    "weighted_RMSE_m_s": 3.417039321763594,
+    "all_RMSE_m_s": 3.2682865445847478,
+    "Vs_RMSE_m_s": 37.03949916417603,
+    "start": 80,
+    "update": 220,
+    "accepted_starts": 80
+  }
+]

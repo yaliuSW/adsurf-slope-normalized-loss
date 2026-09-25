@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "Please cite the submitted manuscript below and the applicable upstream software and data sources."
+title: "SN-ADsurf: slope-normalized surface-wave inversion"
+type: software
+version: "1.0.0"
+date-released: "2026-09-25"
+license: MIT
+repository-code: "https://github.com/yaliuSW/adsurf-slope-normalized-loss"
+authors:
+  - family-names: Liu
+    given-names: Ya
+    orcid: "https://orcid.org/0000-0001-6040-606X"
+  - family-names: Li
+    given-names: Shufeng
+  - family-names: Wu
+    given-names: Zizhao
+  - family-names: Xi
+    given-names: Chaoqiang
+preferred-citation:
+  type: unpublished
+  title: "Slope-normalized refinement for root-free multimode surface-wave inversion"
+  authors:
+    - family-names: Liu
+      given-names: Ya
+    - family-names: Li
+      given-names: Shufeng
+    - family-names: Wu
+      given-names: Zizhao
+    - family-names: Xi
+      given-names: Chaoqiang
+  year: 2026
+  notes: "Manuscript submitted to Earthquake Science on 25 September 2026; not yet published."
+  url: "https://github.com/yaliuSW/adsurf-slope-normalized-loss"

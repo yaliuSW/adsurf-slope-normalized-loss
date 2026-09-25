@@ -1,0 +1,17 @@
+{
+  "case": "strong_lvz",
+  "elastic": "Fixed",
+  "mapped": false,
+  "vary_h": false,
+  "lr_initial": 0.01,
+  "damping": 0.0,
+  "unique_starts": 200,
+  "starts": 200,
+  "iterations": 400,
+  "plateau_options": {
+    "window": 20,
+    "tolerance": 0.01,
+    "patience": 2,
+    "min_raw": 80
+  }
+}

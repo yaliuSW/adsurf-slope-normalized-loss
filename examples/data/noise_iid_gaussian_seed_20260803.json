@@ -1,0 +1,18 @@
+{
+  "case": "noise_iid_gaussian_seed_20260803",
+  "elastic": "Fixed",
+  "mapped": false,
+  "vary_h": false,
+  "lr_initial": 0.01,
+  "damping": 0.0,
+  "unique_starts": 200,
+  "starts": 200,
+  "iterations": 400,
+  "plateau_options": {
+    "window": 20,
+    "tolerance": 0.01,
+    "patience": 2,
+    "min_raw": 80
+  },
+  "seed": 20260803
+}

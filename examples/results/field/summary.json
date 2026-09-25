@@ -1,0 +1,22 @@
+[
+  {
+    "method": "raw",
+    "weighted_RMSE_m_s": 7.0077890709897135,
+    "all_RMSE_m_s": 7.6762214267486515,
+    "Vs_reference_RMSE_0_20_m_s": 22.828037308995405,
+    "Vs_reference_RMSE_20_80_m_s": 78.15867707854146,
+    "start": 71,
+    "update": 40,
+    "accepted_starts": 43
+  },
+  {
+    "method": "retained",
+    "weighted_RMSE_m_s": 4.7697648724811845,
+    "all_RMSE_m_s": 5.0419525812289905,
+    "Vs_reference_RMSE_0_20_m_s": 23.85356102466222,
+    "Vs_reference_RMSE_20_80_m_s": 84.11306819438933,
+    "start": 60,
+    "update": 340,
+    "accepted_starts": 44
+  }
+]

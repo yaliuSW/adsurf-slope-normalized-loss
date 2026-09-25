@@ -1,0 +1,884 @@
+diff --git a/.gitignore b/.gitignore
+index d5e83d3..7257cd1 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,6 @@
+ #
+ build
++build-*/
+ bin
+ .vscode
+ .cache
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1ea4b7b..2c30eed 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,13 +2,15 @@ cmake_minimum_required(VERSION 3.10.0)
+ project(QEDispInv VERSION 1.0.0 LANGUAGES CXX Fortran)
+
+ set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-non-virtual-dtor")
+ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fPIC -ffp-contract=fast")
+-set(CMAKE_Fortran_FLAGS "-Wall -g -O3")
++set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -g -O3 -fPIC")
+
+ option(ENABLE_DEBUG "Enable debug outputs" OFF)
+ option(USE_OPENMP "with openmp" ON)
++option(BUILD_PYTHON "Build python bindings" OFF)
+
+ # OpenMP
+ if (USE_OPENMP)
+@@ -38,5 +40,10 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/external/LBFGSpp EXCLUDE_FROM_ALL)
+ include_directories(${CMAKE_SOURCE_DIR}/include)
+ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
++if (BUILD_PYTHON)
++    set(PYBIND11_FINDPYTHON ON)
++    find_package(pybind11 CONFIG REQUIRED)
++endif()
++
+ add_subdirectory(src)
+ add_subdirectory(fortran)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 4f30dd0..0006448 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -65,4 +65,50 @@ target_link_libraries(inversion
+     PRIVATE
+     OpenMP::OpenMP_CXX
+ )
+-endif()
+\ No newline at end of file
++endif()
++
++if (BUILD_PYTHON)
++    pybind11_add_module(qedispinv_forward
++        pybind_forward.cc
++    )
++
++    target_link_libraries(qedispinv_forward
++        PRIVATE
++        disp
++    )
++
++    pybind11_add_module(qedispinv_inversion
++        pybind_inversion.cc
++        model.cc
++        problem.cc
++    )
++
++    target_link_libraries(qedispinv_inversion
++        PRIVATE
++        disp
++        fmt::fmt-header-only
++        lbfgspp
++    )
++
++    if (USE_OPENMP)
++        target_link_libraries(qedispinv_forward
++            PRIVATE
++            OpenMP::OpenMP_CXX
++        )
++
++        target_link_libraries(qedispinv_inversion
++            PRIVATE
++            OpenMP::OpenMP_CXX
++        )
++    endif()
++
++    install(TARGETS qedispinv_forward
++        LIBRARY DESTINATION .
++        RUNTIME DESTINATION .
++    )
++
++    install(TARGETS qedispinv_inversion
++        LIBRARY DESTINATION .
++        RUNTIME DESTINATION .
++    )
++endif()
+diff --git a/pyproject.toml b/pyproject.toml
+new file mode 100644
+index 0000000..f0b5e9a
+--- /dev/null
++++ b/pyproject.toml
+@@ -0,0 +1,34 @@
++[build-system]
++requires = [
++    "scikit-build-core>=0.11",
++    "pybind11>=2.11",
++]
++build-backend = "scikit_build_core.build"
++
++[project]
++name = "qedispinv"
++version = "1.0.0"
++description = "Surface wave dispersion curve computation and inversion toolkit"
++readme = "README.md"
++requires-python = ">=3.9"
++license = { file = "LICENSE" }
++authors = [
++    { name = "QEDispInv authors" },
++]
++dependencies = [
++    "numpy>=1.21",
++]
++
++[project.optional-dependencies]
++examples = [
++    "h5py",
++    "matplotlib",
++    "scipy",
++]
++
++[tool.scikit-build]
++build-dir = "build/{wheel_tag}"
++wheel.packages = ["python/qedispinv"]
++
++[tool.scikit-build.cmake.define]
++BUILD_PYTHON = "ON"
+diff --git a/python/qedispinv/__init__.py b/python/qedispinv/__init__.py
+new file mode 100644
+index 0000000..eb60107
+--- /dev/null
++++ b/python/qedispinv/__init__.py
+@@ -0,0 +1,11 @@
++"""Installable Python API for QEDispInv."""
++
++from .forward import dispersion, dispersion_match, kernel
++from .inversion import invert
++
++__all__ = [
++    "dispersion",
++    "dispersion_match",
++    "invert",
++    "kernel",
++]
+diff --git a/python/qedispinv/forward.py b/python/qedispinv/forward.py
+new file mode 100644
+index 0000000..c1fe91b
+--- /dev/null
++++ b/python/qedispinv/forward.py
+@@ -0,0 +1,17 @@
++"""Forward-modeling wrappers around the compiled QEDispInv bindings."""
++
++from __future__ import annotations
++
++from importlib import import_module
++
++_forward = import_module("qedispinv_forward")
++
++dispersion = _forward.dispersion
++dispersion_match = _forward.dispersion_match
++kernel = _forward.kernel
++
++__all__ = [
++    "dispersion",
++    "dispersion_match",
++    "kernel",
++]
+diff --git a/python/qedispinv/inversion.py b/python/qedispinv/inversion.py
+new file mode 100644
+index 0000000..a9ca683
+--- /dev/null
++++ b/python/qedispinv/inversion.py
+@@ -0,0 +1,13 @@
++"""Inversion wrappers around the compiled QEDispInv bindings."""
++
++from __future__ import annotations
++
++from importlib import import_module
++
++_inversion = import_module("qedispinv_inversion")
++
++invert = _inversion.invert
++
++__all__ = [
++    "invert",
++]
+diff --git a/src/pybind_forward.cc b/src/pybind_forward.cc
+new file mode 100644
+index 0000000..b25008f
+--- /dev/null
++++ b/src/pybind_forward.cc
+@@ -0,0 +1,281 @@
++#include <pybind11/pybind11.h>
++#include <pybind11/eigen.h>
++
++#include "disp.hpp"
++#include "swegn96.hpp"
++
++#include <algorithm>
++#include <cctype>
++#include <cmath>
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++#if defined(_OPENMP)
++#include <omp.h>
++#endif
++
++namespace py = pybind11;
++
++namespace {
++bool is_love_wave(const std::string &wave_type) {
++  std::string w = wave_type;
++  std::transform(w.begin(), w.end(), w.begin(), [](unsigned char c) {
++    return static_cast<char>(std::tolower(c));
++  });
++  return (w == "love" || w == "sh" || (!w.empty() && w[0] == 'l'));
++}
++
++Eigen::ArrayXXd dispersion_full(const Eigen::Ref<const Eigen::ArrayXXd> model,
++                                const Eigen::VectorXd &freqs, int mode_max,
++                                const std::string &wave_type) {
++  if (model.cols() < 5) {
++    throw std::invalid_argument("model must have at least 5 columns: idx, depth, rho, vs, vp");
++  }
++  if (mode_max < 0) {
++    throw std::invalid_argument("mode_max must be >= 0");
++  }
++  const bool sh = is_love_wave(wave_type);
++  const int nfreq = static_cast<int>(freqs.size());
++  bool used_parallel = false;
++  std::vector<std::vector<double>> modes_by_freq;
++  std::vector<double> out_f;
++  std::vector<double> out_c;
++  std::vector<int> out_m;
++  out_f.reserve(freqs.size() * static_cast<size_t>(mode_max + 1));
++  out_c.reserve(freqs.size() * static_cast<size_t>(mode_max + 1));
++  out_m.reserve(freqs.size() * static_cast<size_t>(mode_max + 1));
++
++  {
++    py::gil_scoped_release release;
++#if defined(_OPENMP)
++    if (omp_get_max_threads() > 1 && nfreq > 1) {
++      used_parallel = true;
++      modes_by_freq.resize(static_cast<size_t>(nfreq));
++#pragma omp parallel
++      {
++        Dispersion disp(model, sh);
++#pragma omp for schedule(dynamic)
++        for (int i = 0; i < nfreq; ++i) {
++          const double f = freqs(i);
++          auto modes = disp.search(f, mode_max + 1);
++          auto &out = modes_by_freq[static_cast<size_t>(i)];
++          out.reserve(modes.size());
++          for (double c : modes) {
++            if (!std::isnan(c)) {
++              out.push_back(c);
++            }
++          }
++        }
++      }
++    } else
++#endif
++    {
++      Dispersion disp(model, sh);
++      for (int i = 0; i < nfreq; ++i) {
++        const double f = freqs(i);
++        auto modes = disp.search(f, mode_max + 1);
++        for (size_t m = 0; m < modes.size(); ++m) {
++          const double c = modes[m];
++          if (!std::isnan(c)) {
++            out_f.push_back(f);
++            out_c.push_back(c);
++            out_m.push_back(static_cast<int>(m));
++          }
++        }
++      }
++    }
++  }
++
++  if (used_parallel) {
++    size_t nout = 0;
++    for (const auto &modes : modes_by_freq) {
++      nout += modes.size();
++    }
++    Eigen::ArrayXXd out(static_cast<int>(nout), 3);
++    int row = 0;
++    for (int i = 0; i < nfreq; ++i) {
++      const double f = freqs(i);
++      const auto &modes = modes_by_freq[static_cast<size_t>(i)];
++      for (size_t m = 0; m < modes.size(); ++m) {
++        out(row, 0) = f;
++        out(row, 1) = modes[m];
++        out(row, 2) = static_cast<double>(m);
++        ++row;
++      }
++    }
++    return out;
++  }
++
++  const int n = static_cast<int>(out_f.size());
++  Eigen::ArrayXXd out(n, 3);
++  for (int i = 0; i < n; ++i) {
++    out(i, 0) = out_f[static_cast<size_t>(i)];
++    out(i, 1) = out_c[static_cast<size_t>(i)];
++    out(i, 2) = static_cast<double>(out_m[static_cast<size_t>(i)]);
++  }
++  return out;
++}
++
++Eigen::ArrayXXd dispersion_match(const Eigen::Ref<const Eigen::ArrayXXd> model,
++                                 const Eigen::Ref<const Eigen::ArrayXXd> disp_in,
++                                 const std::string &wave_type, bool drop_invalid) {
++  if (model.cols() < 5) {
++    throw std::invalid_argument("model must have at least 5 columns: idx, depth, rho, vs, vp");
++  }
++  if (disp_in.cols() < 2) {
++    throw std::invalid_argument("disp_in must have at least 2 columns: freq, mode (or freq, c, mode)");
++  }
++  const bool sh = is_love_wave(wave_type);
++  const int ndata = static_cast<int>(disp_in.rows());
++
++  bool used_parallel = false;
++  std::vector<double> c_values;
++  std::vector<int> modes;
++  std::vector<char> keep;
++  std::vector<double> out_f;
++  std::vector<double> out_c;
++  std::vector<int> out_m;
++  out_f.reserve(disp_in.rows());
++  out_c.reserve(disp_in.rows());
++  out_m.reserve(disp_in.rows());
++
++  {
++    py::gil_scoped_release release;
++#if defined(_OPENMP)
++    if (omp_get_max_threads() > 1 && ndata > 1) {
++      used_parallel = true;
++      c_values.resize(static_cast<size_t>(ndata));
++      modes.resize(static_cast<size_t>(ndata));
++      keep.assign(static_cast<size_t>(ndata), 0);
++#pragma omp parallel
++      {
++        Dispersion disp(model, sh);
++#pragma omp for schedule(dynamic)
++        for (int i = 0; i < ndata; ++i) {
++          const double f = disp_in(i, 0);
++          const int mode = static_cast<int>((disp_in.cols() >= 3) ? disp_in(i, 2) : disp_in(i, 1));
++          const double c = disp.search_mode(f, mode);
++          c_values[static_cast<size_t>(i)] = c;
++          modes[static_cast<size_t>(i)] = mode;
++          keep[static_cast<size_t>(i)] = static_cast<char>(!std::isnan(c) || !drop_invalid);
++        }
++      }
++    } else
++#endif
++    {
++      Dispersion disp(model, sh);
++      for (int i = 0; i < ndata; ++i) {
++        const double f = disp_in(i, 0);
++        const int mode = static_cast<int>((disp_in.cols() >= 3) ? disp_in(i, 2) : disp_in(i, 1));
++        const double c = disp.search_mode(f, mode);
++        if (std::isnan(c)) {
++          if (!drop_invalid) {
++            out_f.push_back(f);
++            out_c.push_back(c);
++            out_m.push_back(mode);
++          }
++          continue;
++        }
++        out_f.push_back(f);
++        out_c.push_back(c);
++        out_m.push_back(mode);
++      }
++    }
++  }
++
++  if (!used_parallel) {
++    const int n = static_cast<int>(out_f.size());
++    Eigen::ArrayXXd out(n, 3);
++    for (int i = 0; i < n; ++i) {
++      out(i, 0) = out_f[static_cast<size_t>(i)];
++      out(i, 1) = out_c[static_cast<size_t>(i)];
++      out(i, 2) = static_cast<double>(out_m[static_cast<size_t>(i)]);
++    }
++    return out;
++  }
++
++  int n = 0;
++  for (char item : keep) {
++    n += item ? 1 : 0;
++  }
++  Eigen::ArrayXXd out(n, 3);
++  int row = 0;
++  for (int i = 0; i < ndata; ++i) {
++    if (!keep[static_cast<size_t>(i)]) {
++      continue;
++    }
++    out(row, 0) = disp_in(i, 0);
++    out(row, 1) = c_values[static_cast<size_t>(i)];
++    out(row, 2) = static_cast<double>(modes[static_cast<size_t>(i)]);
++    ++row;
++  }
++  return out;
++}
++
++py::dict kernel_from_disp(const Eigen::Ref<const Eigen::ArrayXXd> model,
++                          const Eigen::Ref<const Eigen::ArrayXXd> disp,
++                          const std::string &wave_type) {
++  if (model.cols() < 5) {
++    throw std::invalid_argument("model must have at least 5 columns: idx, depth, rho, vs, vp");
++  }
++  if (disp.cols() < 2) {
++    throw std::invalid_argument("disp must have at least 2 columns: freq, phase_velocity");
++  }
++  const bool sh = is_love_wave(wave_type);
++  const int nl = model.rows();
++  const int nd = disp.rows();
++  Eigen::ArrayXXd kvp(nl, nd);
++  Eigen::ArrayXXd kvs(nl, nd);
++  Eigen::ArrayXXd krho(nl, nd);
++  Eigen::ArrayXXd kh(nl, nd);
++  Eigen::ArrayXXd disp_copy;
++  Eigen::ArrayXd z;
++
++  {
++    py::gil_scoped_release release;
++    SwEgn96 se(model, sh);
++    for (int i = 0; i < nd; ++i) {
++      const double f = disp(i, 0);
++      const double c = disp(i, 1);
++      auto ker = se.kernel(f, c);
++      kvp.col(i) = ker["vp"];
++      kvs.col(i) = ker["vs"];
++      krho.col(i) = ker["rho"];
++      kh.col(i) = ker["h"];
++    }
++
++    disp_copy = disp;
++    z = model.col(1);
++  }
++
++  py::dict out;
++  out["disp"] = disp_copy;
++  out["kvp"] = kvp;
++  out["kvs"] = kvs;
++  out["krho"] = krho;
++  out["h"] = kh;
++  out["z"] = z;
++  return out;
++}
++} // namespace
++
++PYBIND11_MODULE(qedispinv_forward, m) {
++  m.doc() = "QEDispInv forward modeling bindings";
++
++  m.def("dispersion", &dispersion_full,
++        py::arg("model"), py::arg("freqs"), py::arg("mode_max") = 0,
++        py::arg("wave_type") = "rayleigh",
++        "Compute dispersion curves for given frequencies. Returns Nx3 array: f, c, mode.");
++
++  m.def("dispersion_match", &dispersion_match,
++        py::arg("model"), py::arg("disp_in"),
++        py::arg("wave_type") = "rayleigh",
++        py::arg("drop_invalid") = true,
++        "Compute dispersion curves matching given (freq, mode) rows. Returns Nx3 array.");
++
++  m.def("kernel", &kernel_from_disp,
++        py::arg("model"), py::arg("disp"),
++        py::arg("wave_type") = "rayleigh",
++        "Compute sensitivity kernels for given dispersion points. Returns dict with kvp/kvs/krho/h/z.");
++}
+diff --git a/src/pybind_inversion.cc b/src/pybind_inversion.cc
+new file mode 100644
+index 0000000..8b28420
+--- /dev/null
++++ b/src/pybind_inversion.cc
+@@ -0,0 +1,392 @@
++#include <pybind11/pybind11.h>
++#include <pybind11/eigen.h>
++#include <pybind11/stl.h>
++
++#include "problem.hpp"
++#include "model.hpp"
++#include "utils.hpp"
++
++#include <LBFGSB.h>
++#include <Eigen/Dense>
++
++#include <algorithm>
++#include <cctype>
++#include <memory>
++#include <random>
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++namespace py = pybind11;
++using namespace Eigen;
++using namespace LBFGSpp;
++
++namespace {
++std::string to_lower(std::string s) {
++  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
++    return static_cast<char>(std::tolower(c));
++  });
++  return s;
++}
++
++bool is_love_wave(const std::string &wave_type) {
++  std::string w = to_lower(wave_type);
++  return (w == "love" || w == "sh" || (!w.empty() && w[0] == 'l'));
++}
++
++std::shared_ptr<Vs2Model> make_vs2model(const std::string &name,
++                                        const Eigen::Ref<const Eigen::ArrayXXd> model_ref,
++                                        double vp2vs) {
++  std::string key = to_lower(name);
++  std::shared_ptr<Vs2Model> pmodel;
++  if (key == "nearsurface") {
++    pmodel = std::make_shared<NearSurface>(model_ref);
++    pmodel->set_param({vp2vs});
++  } else if (key == "gardner") {
++    pmodel = std::make_shared<Gardner>(model_ref);
++  } else if (key == "fixvprho") {
++    pmodel = std::make_shared<FixVpRho>(model_ref);
++  } else if (key == "brocher05") {
++    pmodel = std::make_shared<Brocher05>(model_ref);
++  } else {
++    throw std::invalid_argument("invalid vs2model: " + name);
++  }
++  return pmodel;
++}
++
++std::vector<double> normalize_weight(const Data &data, const std::vector<double> &weight_in) {
++  int max_mode = 0;
++  for (int m : data.mode) {
++    max_mode = std::max(max_mode, m);
++  }
++  std::vector<double> weight;
++  if (weight_in.empty()) {
++    weight.assign(static_cast<size_t>(max_mode + 1), 1.0);
++  } else {
++    weight = weight_in;
++    if (static_cast<int>(weight.size()) < max_mode + 1) {
++      weight.resize(static_cast<size_t>(max_mode + 1), 1.0);
++    }
++  }
++  return weight;
++}
++} // namespace
++
++py::dict invert(const Eigen::Ref<const Eigen::ArrayXXd> disp,
++                const Eigen::Ref<const Eigen::ArrayXXd> model_ref,
++                const std::string &wave_type,
++                const std::string &vs2model,
++                double vp2vs,
++                double vs_width,
++                double lamb_vs,
++                int reg_type,
++                const std::vector<double> &weight_in,
++                int num_init,
++                int num_noise,
++                bool rand_depth,
++                bool rand_vs,
++                double zmax,
++                double r0,
++                double rmin,
++                double rmax,
++                const std::vector<double> &sigma,
++                bool remove_outliers,
++                int max_iterations,
++                double epsilon,
++                int past,
++                double delta) {
++  if (disp.cols() < 3) {
++    throw std::invalid_argument("disp must have 3 columns: freq, c, mode (optional 4th sigma)");
++  }
++  if (model_ref.cols() < 5) {
++    throw std::invalid_argument("model_ref must have 5 columns: idx, depth, rho, vs, vp");
++  }
++  if (num_init < 1 || num_noise < 1) {
++    throw std::invalid_argument("num_init and num_noise must be >= 1");
++  }
++  if (max_iterations < 1) {
++    throw std::invalid_argument("max_iterations must be >= 1");
++  }
++  if (epsilon <= 0.0) {
++    throw std::invalid_argument("epsilon must be > 0");
++  }
++  if (past < 0 || delta < 0.0) {
++    throw std::invalid_argument("past and delta must be >= 0");
++  }
++
++  const bool sh = is_love_wave(wave_type);
++
++  ArrayXXd data_input = disp;
++  Data data(data_input);
++
++  auto weight = normalize_weight(data, weight_in);
++
++  if (num_noise > 1 && data_input.cols() < 4) {
++    if (sigma.empty()) {
++      throw std::invalid_argument("sigma must be provided when num_noise > 1 and disp has no sigma column");
++    }
++    if (sigma.size() < weight.size()) {
++      throw std::invalid_argument("sigma size must be >= weight size");
++    }
++    data.add_sigma(sigma);
++  }
++
++  std::vector<Data> data_noise;
++  if (num_noise == 1) {
++    data_noise.push_back(data);
++  } else {
++    for (int i = 0; i < num_noise; ++i) {
++      data_noise.push_back(resample(data));
++    }
++  }
++
++  auto pmodel = make_vs2model(vs2model, model_ref, vp2vs);
++
++  LBFGSBParam<double> param;
++  param.max_iterations = max_iterations;
++  param.epsilon = epsilon;
++  param.past = past;
++  param.delta = delta;
++  LBFGSBSolver<double> solver(param);
++
++  std::vector<ArrayXd> z_init;
++  if (num_init == 1) {
++    z_init.push_back(model_ref.col(1));
++  } else {
++    for (int i = 0; i < num_init; ++i) {
++      if (rand_depth) {
++        z_init.push_back(generate_depth_by_layer_ratio(data.lmin, data.lmax, r0, rmin, rmax, zmax));
++      } else {
++        z_init.push_back(model_ref.col(1));
++      }
++    }
++  }
++
++  std::vector<ArrayXd> vs_ref, vs_lb, vs_ub;
++  for (int i = 0; i < num_init; ++i) {
++    ArrayXd z = z_init[i];
++    ArrayXd vsr, lb, ub;
++    pmodel->get_vs_limits(z, vs_width, vsr, lb, ub);
++    vs_ref.push_back(vsr);
++    vs_lb.push_back(lb);
++    vs_ub.push_back(ub);
++  }
++
++  // add last layer if half lmax deeper than current bottom
++  const double half_lmax = data.lmax / 2.0;
++  if (half_lmax > zmax) {
++    double cmax0 = 0.0;
++    if (data.c.count(0)) {
++      auto &c0 = data.c[0];
++      if (!c0.empty()) {
++        cmax0 = *std::max_element(c0.begin(), c0.end());
++      }
++    }
++    for (int i = 0; i < num_init; ++i) {
++      int nl = z_init[i].rows();
++      if (half_lmax < z_init[i](nl - 1)) {
++        continue;
++      }
++      double cmax = std::max(cmax0, vs_ref[i][nl - 1]);
++      ArrayXd tmp(nl + 1);
++      tmp.head(nl) = z_init[i];
++      tmp(nl) = half_lmax;
++      z_init[i] = tmp;
++
++      tmp.head(nl) = vs_ref[i];
++      tmp(nl) = cmax * 1.01;
++      vs_ref[i] = tmp;
++
++      tmp.head(nl) = vs_lb[i];
++      tmp(nl) = cmax;
++      vs_lb[i] = tmp;
++
++      tmp.head(nl) = vs_ub[i];
++      tmp(nl) = cmax + vs_width;
++      vs_ub[i] = tmp;
++    }
++  }
++
++  std::random_device rd;
++  std::mt19937 gen(rd());
++  std::uniform_real_distribution<> dist(0.0, 1.0);
++
++  auto gen_rand_vsinit = [&](const ArrayXd &lb, const ArrayXd &ub) -> ArrayXd {
++    int nl = lb.rows();
++    ArrayXd rand = ArrayXd::NullaryExpr(nl, [&]() { return dist(gen); });
++    ArrayXd x = lb.array() + (ub - lb).array() * rand;
++    return x;
++  };
++
++  std::vector<ArrayXd> vs_init;
++  if (num_init == 1) {
++    vs_init.push_back(vs_ref[0]);
++  } else {
++    for (int i = 0; i < num_init; ++i) {
++      if (rand_vs) {
++        vs_init.push_back(gen_rand_vsinit(vs_lb[i], vs_ub[i]));
++      } else {
++        vs_init.push_back(pmodel->interp_vs(z_init[i]));
++      }
++    }
++  }
++
++  const int num_total = num_init * num_noise;
++  std::vector<double> fitness;
++  std::vector<int> niter;
++  std::vector<ArrayXd> z_inv;
++  std::vector<ArrayXd> vs_inv;
++  std::vector<ArrayXXd> disp_syn;
++  fitness.reserve(static_cast<size_t>(num_total));
++  niter.reserve(static_cast<size_t>(num_total));
++  z_inv.reserve(static_cast<size_t>(num_total));
++  vs_inv.reserve(static_cast<size_t>(num_total));
++  disp_syn.reserve(static_cast<size_t>(num_total));
++
++  {
++    py::gil_scoped_release release;
++    for (int i = 0; i < num_total; ++i) {
++      int i_d = i / num_init;
++      int i_m = i % num_init;
++      Data data_resampled = data_noise[i_d];
++      ArrayXd z_model = z_init[i_m];
++
++      lbfgspp::DispersionCurves prob(z_model, vs_ref[i_m], pmodel, weight,
++                                     lamb_vs, sh, reg_type);
++      prob.load_data(data_resampled);
++
++      VectorXd x = vs_init[i_m];
++      double feval = 0.0;
++      int it = 0;
++      try {
++        it = solver.minimize(prob, x, feval, vs_lb[i_m], vs_ub[i_m]);
++      } catch (const std::exception &) {
++        // keep feval as is
++      }
++
++      fitness.push_back(feval);
++      niter.push_back(it);
++      z_inv.push_back(z_model);
++      vs_inv.push_back(x);
++      auto model = pmodel->generate(z_model, x);
++      disp_syn.push_back(prob.forward(model));
++    }
++  }
++
++  if (remove_outliers && num_total > 1) {
++    std::vector<size_t> idx_outlier = detect_outliers(fitness);
++    remove_by_indices(fitness, idx_outlier);
++    remove_by_indices(niter, idx_outlier);
++    remove_by_indices(z_inv, idx_outlier);
++    remove_by_indices(vs_inv, idx_outlier);
++    remove_by_indices(disp_syn, idx_outlier);
++  }
++
++  const int num_hist = 100;
++  double vsmin = min_varray(vs_inv);
++  double vsmax = max_varray(vs_inv);
++  vsmin *= 0.95;
++  vsmax *= 1.05;
++  ArrayXd z_samples(num_hist), vs_samples(num_hist);
++  ArrayXXd hist = compute_hist2d(z_inv, vs_inv, fitness, vsmin, vsmax, zmax,
++                                 num_hist, z_samples, vs_samples);
++
++  ArrayXd vs_mean(num_hist), vs_mode(num_hist), vs_median(num_hist),
++      vs_cred10(num_hist), vs_cred90(num_hist);
++  compute_statistics(z_samples, vs_samples, hist, vs_mean, vs_median, vs_mode,
++                     vs_cred10, vs_cred90);
++
++  ArrayXXd model_mean = pmodel->generate(z_samples, vs_mean);
++  ArrayXd vs_ref_save = pmodel->interp_vs(z_samples);
++
++  std::vector<int> mode_used;
++  for (size_t i = 0; i < weight.size(); ++i) {
++    if (weight[i] > 0) {
++      mode_used.push_back(static_cast<int>(i));
++    }
++  }
++
++  py::list model_init_list;
++  for (size_t i = 0; i < vs_init.size(); ++i) {
++    auto model = pmodel->generate(z_init[i], vs_init[i]);
++    model_init_list.append(model);
++  }
++
++  py::list disp_list;
++  for (const auto &d : disp_syn) {
++    disp_list.append(d);
++  }
++
++  py::list z_inv_list;
++  py::list vs_inv_list;
++  for (size_t i = 0; i < z_inv.size(); ++i) {
++    z_inv_list.append(z_inv[i]);
++    vs_inv_list.append(vs_inv[i]);
++  }
++
++  ArrayXd fitness_arr = Map<const ArrayXd, Unaligned>(fitness.data(), fitness.size());
++  ArrayXi niter_arr = Map<const ArrayXi, Unaligned>(niter.data(), niter.size());
++
++  py::dict out;
++  out["fitness"] = fitness_arr;
++  out["niter"] = niter_arr;
++  out["z_sample"] = z_samples;
++  out["vs_sample"] = vs_samples;
++  out["vs_hist2d"] = hist;
++  out["data"] = data_input;
++  out["vs_mean"] = vs_mean;
++  out["vs_median"] = vs_median;
++  out["vs_mode"] = vs_mode;
++  out["vs_cred10"] = vs_cred10;
++  out["vs_cred90"] = vs_cred90;
++  out["model_mean"] = model_mean;
++  out["vs_ref"] = vs_ref_save;
++  out["num_init"] = num_init;
++  out["model_init"] = model_init_list;
++  out["mode_used"] = mode_used;
++  out["num_valid"] = static_cast<int>(fitness.size());
++  out["disp"] = disp_list;
++  out["z_inv"] = z_inv_list;
++  out["vs_inv"] = vs_inv_list;
++  return out;
++}
++
++PYBIND11_MODULE(qedispinv_inversion, m) {
++  m.doc() = "QEDispInv inversion bindings";
++
++  m.def(
++      "invert", &invert,
++      py::arg("disp"),
++      py::arg("model_ref"),
++      py::arg("wave_type") = "rayleigh",
++      py::arg("vs2model") = "nearsurface",
++      py::arg("vp2vs") = 1.8,
++      py::arg("vs_width") = 0.7,
++      py::arg("lamb_vs") = 1.0e-2,
++      py::arg("reg_type") = 2,
++      py::arg("weight") = std::vector<double>{},
++      py::arg("num_init") = 1,
++      py::arg("num_noise") = 1,
++      py::arg("rand_depth") = true,
++      py::arg("rand_vs") = true,
++      py::arg("zmax") = 0.025,
++      py::arg("r0") = 0.5,
++      py::arg("rmin") = 1.0,
++      py::arg("rmax") = 1.5,
++      py::arg("sigma") = std::vector<double>{},
++      py::arg("remove_outliers") = true,
++      py::arg("max_iterations") = 100,
++      py::arg("epsilon") = 1.0e-4,
++      py::arg("past") = 5,
++      py::arg("delta") = 1.0e-6,
++      R"pbdoc(
++Run inversion in-process.
++
++Args:
++  disp: Nx3 or Nx4 array (freq, phase_velocity, mode, [sigma]). Units in km/s.
++  model_ref: reference model, 5 columns [idx, depth(km), rho, vs, vp].
++  epsilon, past, delta: LBFGS-B convergence controls matching the upstream CLI.
++
++Returns a dict with fitness, niter, statistics, and per-run results.
++)pbdoc");
++}

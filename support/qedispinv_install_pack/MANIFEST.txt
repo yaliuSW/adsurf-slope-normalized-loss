@@ -1,0 +1,10 @@
+QEDispInv Python interface support
+
+Upstream: https://github.com/pan3rock/QEDispInv.git
+Pinned commit: ed1b5dd7b449a2b3a27bb8e6581278790f5df8aa
+
+The Python-interface patch originates from the SurfTomoFlow integration.
+Files: README.md, install_qedispinv_to_conda.sh, conda-build-deps.txt,
+patches/qedispinv-python-interface.patch, LICENSE.LGPL-3.0.
+
+No compiled binaries are distributed.
