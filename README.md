@@ -14,12 +14,12 @@ recent progress stalls, each initial model may switch once to a bounded
 slope-normalized objective. The weights are recomputed at every update and
 held fixed during that update's model gradient:
 
-\[
+```math
 w_i=\min\left(\frac{1}{|c_i^{\mathrm{obs}}|\max(|R_{c,i}|,\epsilon)},30\right),
 \qquad \ell_i=\min(w_i|R_i|,100).
-\]
+```
 
-Here \(R_i\) is the dispersion-equation residual and \(R_{c,i}\) its local
+Here $R_i$ is the dispersion-equation residual and $R_{c,i}$ its local
 phase-velocity derivative. The slope floor is evaluated separately for each
 model. The default switch checks 20-update windows, a 1% improvement threshold,
 two consecutive stagnant windows and at least 80 raw-objective updates.
